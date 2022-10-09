@@ -1,1 +1,1 @@
-web: gunicorn shortnsweet.wsgi 
+web: gunicorn URLProject.wsgi 
