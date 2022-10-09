@@ -1,1 +1,0 @@
-web: gunicorn shortnsweet.wsgi --log-file -
