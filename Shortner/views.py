@@ -58,7 +58,7 @@ def checkIDExists(ID):  # Check to see if ID exists in DB
     if str(ID) in Retreived_IDs:
         surl = URL_ID = URLData.objects.all().filter(URLID=str(ID))[0].ShortURL
         mess = (
-            "Record Already Exists. The Shortened Link is: {}/{}".format(service_url, surl))
+            "Record Already Exists. The Shortened Link is:: {}/{}".format(service_url, surl))
     else:
         U = URLData(URLID=ID, ShortURL=sc)
         U.save()
