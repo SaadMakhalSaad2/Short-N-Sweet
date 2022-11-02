@@ -1,6 +1,6 @@
 from django import forms
 
 
-class URLDataForm(forms.Form):
-    EnterURL = forms.CharField(label='Enter Your URL ', max_length=1000, widget=forms.TextInput(
-        attrs={'placeholder': 'Shorten URL Here'}))
+class CompressForm(forms.Form):
+    message = forms.CharField(label='message to decompress', max_length=1000, widget=forms.TextInput(
+        attrs={'placeholder': 'message', 'class': 'custom-input'}))

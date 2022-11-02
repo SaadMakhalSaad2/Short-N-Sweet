@@ -1,7 +1,7 @@
 from rest_framework import serializers
-from . models import URLData
+from . models import MessageData
 
-class URLDataSerializers(serializers.ModelSerializer):
+class MessageDataSerializer(serializers.ModelSerializer):
     class Meta:
-        model = URLData
+        model = MessageData
         field = '__all__'

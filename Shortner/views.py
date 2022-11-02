@@ -1,96 +1,68 @@
+from bz2 import decompress
+from email.message import Message
+from unittest import loader, result
 from django.shortcuts import render
 from rest_framework import viewsets, status
 from rest_framework.decorators import api_view
 from django.core import serializers
 from django.contrib import messages
 from rest_framework.response import Response
-from django.http import JsonResponse
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from rest_framework.parsers import JSONParser
 from django.db import connection
-from . models import URLData
-from . forms import URLDataForm
-from . serializer import URLDataSerializers
-from django.shortcuts import redirect
-import sqlite3
-import string
-import random
+from . models import MessageData
+from . forms import CompressForm
+from . serializer import MessageDataSerializer
 
 # Declare Key Varaibles
 BASE_LIST = '0123456789abcdefghijklmnopqrstuvwxyz./:'
 BASE_DICT = dict((c, idx) for idx, c in enumerate(BASE_LIST))
-service_url = 'https://shortnsweet.herokuapp.com'
+# service_url = 'https://shortnsweet.herokuapp.com'
+service_url = '127.0.0.1'
 
 
-class FullURLView(viewsets.ModelViewSet):
-    queryset = URLData.objects.all()
-    serializers_class = URLDataSerializers
-
-
-def base_encode(integer, alphabet=BASE_LIST):  # Convert ID to FullURL
-    if integer == 0:
-        return alphabet[0]
-    arr = []
-    base = len(alphabet)
-    while integer:
-        integer, rem = divmod(integer, base)
-        arr.append(alphabet[rem])
-    arr.reverse()
-    return ''.join(arr)
-
-
-def base_decode(request, reverse_base=BASE_DICT):  # Convert Full URL to ID
-    longurl = request
-    length = len(reverse_base)
-    ret = 0
-    for i, c in enumerate(longurl[::-1]):
-        ret += (length ** i) * reverse_base[c]
-    return ret
-
-
-def shortChars():  # Get Shortened URL endpoint
-    SHORT_LIST_CHAR = '0123456789'+string.ascii_letters
-    return ''.join([random.choice(SHORT_LIST_CHAR) for i in range(10)])
-
-
-def checkIDExists(ID):  # Check to see if ID exists in DB
-    sc = str(shortChars())
-    Retreived_IDs = list(URLData.objects.values_list('URLID', flat=True))
-    if str(ID) in Retreived_IDs:
-        surl = URL_ID = URLData.objects.all().filter(URLID=str(ID))[0].ShortURL
-        mess = (
-            "Record Already Exists. The Shortened Link is: {}/{}".format(service_url, surl))
-    else:
-        U = URLData(URLID=ID, ShortURL=sc)
-        U.save()
-        mess = ("Congratulatons! Your shortened URL is {}/{}".format(service_url, sc))
-    return mess
-
-
-def redirect_short_url(request, short_url):
-    redirect_url = service_url+'/shorten'
-    try:
-        URL_ID = URLData.objects.all().filter(ShortURL=short_url)[0].URLID
-        redirect_url = base_encode(int(URL_ID))
-    except Exception as e:
-        print(e, 'zeppi')
-    return redirect(redirect_url)
-
-
-def appendPrefix(entry):
-    match = ['http', 'https']
-    if any(x in entry for x in match):
-        return entry
-    else:
-        return ('https://'+str(entry))
-
+def decompress(str1):
+    ints = "1234567890"
+    num = ""
+    letters = ""
+    result_string = ""
+    i = 0
+    while i < len(str1):
+        if str1[i] in ints:
+            num += str1[i]
+        else:
+            letters += str1[i]
+        i += 1
+    for i, char in enumerate(num):
+        result_string += int(char) * letters[i]
+    return result_string
 
 def get_form(request):
-    if request.method == 'POST':
-        form = URLDataForm(request.POST)
-        if form.is_valid():
-            fullurl = form.cleaned_data['EnterURL']
-            fullurladj = appendPrefix(fullurl)
-            ID = base_decode(fullurladj.lower())
-            messages.success(request, '{}'.format(checkIDExists(ID)))
-    form = URLDataForm()
-    return render(request, 'myform/form.html', {'form': form})
+    list = []
+    data = MessageData.objects.all()
+    for d in data:
+        list.append(d)
+    print(list)
+    list.reverse()
+
+    if request.method == 'POST':            
+        form = CompressForm(request.POST)
+        if form.is_valid():    
+            text = form.cleaned_data['message']
+
+            msg = MessageData()
+            msg.message = text
+            msg.decoded = decompress(text)
+            if msg.decoded:
+                msg.save()
+            else:
+                messages.success(request, '{}'.format('Invalid input'))
+
+            return HttpResponseRedirect("/")
+
+           
+            
+    form = CompressForm()
+    return render(request, 'myform/form.html', {'form': form, 'things': list})
+        
+
